@@ -1,0 +1,47 @@
+# Godot generated caches (including nested demo projects).
+.godot/
+.import/
+.mono/
+/android/
+export_credentials.cfg
+
+# Export games into these directories, not among source assets.
+/build/
+/builds/
+/dist/
+/exports/
+
+# Fusion editor hot-reload copies. Keep the original native libraries.
+/addons/fusion/bin/~*
+
+# Local editor settings.
+.vs/
+.idea/
+.vscode/
+*.csproj.user
+*.suo
+
+# Logs, temporary files and backups.
+*.log
+*.tmp
+*.TMP
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# OS metadata.
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Local secrets.
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Keep *.uid, *.import, export_presets.cfg, models, animations and textures.
+# Keep addons/fusion/bin libraries and export_templates archives: SDK dependencies.

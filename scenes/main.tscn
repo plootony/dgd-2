@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://cc7ojmv5075j8"]
+
+[ext_resource type="Script" uid="uid://c7kk4nxlwlmu1" path="res://scripts/main.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/tony.tscn" id="3"]
+[ext_resource type="Shader" path="res://environments/drifting_fog.gdshader" id="4"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fog"]
+shader = ExtResource("4")
+shader_parameter/density = 0.20
+shader_parameter/tint = Color(0.72, 0.8, 0.86, 1)
+shader_parameter/wind = Vector2(0.22, 0.1)
+
+[node name="TestArena" type="Node3D" unique_id=535158542]
+script = ExtResource("1")
+
+[node name="DriftingFog" type="FogVolume" parent="." unique_id=844239636]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+size = Vector3(38, 5, 38)
+material = SubResource("ShaderMaterial_fog")
+
+[node name="Tony" parent="." unique_id=1303474063 instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.2, 7)
+
+[node name="Players" type="Node3D" parent="." unique_id=1381656623]
+
+[node name="PlayerSpawner" type="FusionSpawner" parent="." unique_id=1877813717]
+spawn_path = NodePath("../Players")
+spawnable_scenes = Array[PackedScene]([ExtResource("2")])

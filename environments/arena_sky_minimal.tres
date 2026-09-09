@@ -1,0 +1,8 @@
+[gd_resource type="Sky" format=3 uid="uid://b05jsxylxlj17"]
+
+[sub_resource type="PhysicalSkyMaterial" id="material"]
+energy_multiplier = 0.1
+
+[resource]
+sky_material = SubResource("material")
+radiance_size = 0

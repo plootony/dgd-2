@@ -1,0 +1,39 @@
+[gd_resource type="Sky" format=3 uid="uid://bw8otxrhwav1q"]
+
+[ext_resource type="Shader" uid="uid://04y3d28fgvgm" path="res://environments/clouds/sky_volumetric_clouds.gdshader" id="1"]
+[ext_resource type="CompressedTexture3D" uid="uid://1awmqbghlwdf" path="res://environments/clouds/worlnoise.webp" id="2"]
+[ext_resource type="CompressedTexture3D" uid="uid://qlp0s3raunag" path="res://environments/clouds/perlworlnoise.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://ba6l7mnwf2aya" path="res://environments/clouds/weather.webp" id="4"]
+
+[sub_resource type="ShaderMaterial" id="material"]
+shader = ExtResource("1")
+shader_parameter/worlnoise = ExtResource("2")
+shader_parameter/perlworlnoise = ExtResource("3")
+shader_parameter/cloud_map = ExtResource("4")
+shader_parameter/cloud_density = 0.05
+shader_parameter/cloud_coverage = 0.35
+shader_parameter/cloud_time_scale = 1.0
+shader_parameter/cloud_time_offset = 0.0
+shader_parameter/cloud_direction = Vector2(0.9, 1)
+shader_parameter/cloud_steps_range = Vector2(192, 108)
+shader_parameter/clouds_screen_lod = 1.0
+shader_parameter/cloud_modulate = Color(1, 1, 1, 1)
+shader_parameter/cloud_camera_position_mult = Vector2(0.1, 0.2)
+shader_parameter/cloud_camera_height = 0.0
+shader_parameter/rayleigh = 2.0
+shader_parameter/rayleigh_color = Color(0.26, 0.41, 0.58, 1)
+shader_parameter/mie = 0.005
+shader_parameter/mie_eccentricity = 0.8
+shader_parameter/mie_color = Color(0.63, 0.77, 0.92, 1)
+shader_parameter/turbidity = 10.0
+shader_parameter/sun_disk_scale = 1.0
+shader_parameter/ground_color = Color(1, 1, 1, 1)
+shader_parameter/exposure = 0.1
+shader_parameter/space_emit_color = Color(1, 1, 1, 1)
+shader_parameter/space_emit_angle = 0.0
+shader_parameter/space_emit_strength = 0.0
+
+[resource]
+sky_material = SubResource("material")
+process_mode = 2
+radiance_size = 0
