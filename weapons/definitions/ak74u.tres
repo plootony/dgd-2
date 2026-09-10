@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+[ext_resource type="Script" path="res://weapons/weapon_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+display_name = "AK74U"
+model_path = "res://weapon/shared-hands/AK74U_bare_arms.glb"
+damage = 34
+shot_seconds = 0.12
+automatic = true
+hip_position = Vector3(0.12, -1.60, 0.02)
+rear_sight = Vector3(-0.067394, 1.5815, 0.2673)
+front_sight = Vector3(-0.067394, 1.574903, 0.47532)
+sight_distance = 0.18
+run_pitch_degrees = -10.0
+run_vertical_offset = -0.025
+clip_suffixes = {"idle": "IDLE", "shoot": "SHOOT", "reload": "RELOAD2"}

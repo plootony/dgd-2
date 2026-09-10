@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+[ext_resource type="Script" path="res://weapons/weapon_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+display_name = "Beretta"
+model_path = "res://weapon/shared-hands/Beretta_bare_arms.glb"
+damage = 40
+shot_seconds = 0.24
+automatic = false
+hip_position = Vector3(0.08, -0.12, -0.10)
+rear_sight = Vector3(-0.039482, 0.05381, 0.24945)
+front_sight = Vector3(-0.039274, 0.05295, 0.39029)
+sight_distance = 0.22
+run_pitch_degrees = -6.0
+run_vertical_offset = 0.015
+idle_cycle_seconds = 3.0
+clip_frames = {"idle": Vector2(480, 490), "aim": Vector2(480, 480), "shoot": Vector2(225, 247), "reload": Vector2(250, 335)}
