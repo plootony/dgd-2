@@ -30,6 +30,9 @@ func run():
 	zombie.velocity = Vector3.ZERO
 	player.global_position = Vector3(0, 0, 5)
 	zombie.combat.apply_damage(101, Vector3.ZERO)
+	await create_timer(zombie.animation.get_animation("zombie/fall").length + 0.1).timeout
+	zombie.global_position = Vector3.ZERO
+	zombie.velocity = Vector3.ZERO
 	zombie._set_state(zombie.State.CHASE)
 	zombie._search_time = 0.0
 	for frame in 90:

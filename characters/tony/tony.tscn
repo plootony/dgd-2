@@ -10,7 +10,7 @@
 radius = 0.32
 height = 1.9
 [sub_resource type="FusionReplicationConfig" id="config"]
-property_count = 9
+property_count = 10
 properties/0/path = NodePath(":net_grounded")
 properties/0/interpolate = 1
 properties/1/path = NodePath("Combat:death_velocity")
@@ -34,6 +34,9 @@ properties/7/interpolate = 0
 
 properties/8/path = NodePath("Combat:death_source")
 properties/8/interpolate = 0
+
+properties/9/path = NodePath(":net_prone")
+properties/9/interpolate = 0
 
 [node name="Tony" type="CharacterBody3D" groups=["NPCs"]]
 collision_layer = 2

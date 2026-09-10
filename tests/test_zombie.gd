@@ -109,7 +109,12 @@ func run():
 	check(zombie.get_state() == zombie.State.CHASE, "feeding ends after its duration")
 	zombie.combat.apply_damage(zombie.combat.health - 24, Vector3.ZERO)
 	tick()
-	check(zombie.is_crawling(), "low health still enables crawl")
+	check(
+		zombie.get_state() == zombie.State.FALL and not zombie.is_crawling(),
+		"low health starts a fall before crawl"
+	)
+	tick(zombie.animation.get_animation("zombie/fall").length + 0.01)
+	check(zombie.is_crawling(), "completed fall enables crawl")
 	zombie.combat.apply_damage(1000, Vector3.ZERO)
 	check(zombie.combat.is_dead(), "zombie can be killed during any action")
 	zombie.combat._dead_time = 5.0

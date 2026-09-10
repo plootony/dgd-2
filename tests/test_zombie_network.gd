@@ -2,6 +2,7 @@ extends SceneTree
 
 var role = "host"
 var failures = 0
+var saw_fall = false
 var saw_hit = false
 var saw_bite = false
 var saw_scream = false
@@ -25,6 +26,7 @@ func check(value: bool, label: String) -> void:
 func wait_for_health(actor: Node, health: int, zombie: Node) -> bool:
 	var deadline = Time.get_ticks_msec() + 15000
 	while Time.get_ticks_msec() < deadline:
+		saw_fall = saw_fall or zombie._clip == &"zombie/fall"
 		saw_hit = saw_hit or zombie.net_stagger.z > 0
 		saw_bite = saw_bite or zombie._clip == &"zombie/crawl_bite"
 		saw_scream = saw_scream or zombie._clip == &"zombie/scream"
@@ -73,6 +75,7 @@ func run() -> void:
 		zombie.combat.apply_damage(101, Vector3.ZERO)
 	check(await wait_for_health(victim, 60, zombie), "crawling zombie damage is replicated")
 	check(saw_hit, "brief flinch is replicated")
+	check(saw_fall, "fall plays on both peers before crawl")
 	check(await wait_for_health(victim, 40, zombie), "third punch is replicated")
 	check(await wait_for_health(victim, 20, zombie), "fourth punch leaves victim vulnerable")
 	check(await wait_for_health(victim, 0, zombie), "bite is the killing attack")

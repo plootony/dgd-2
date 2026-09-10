@@ -2,6 +2,7 @@ extends SceneTree
 ## Retarget Mixamo motion to Tony. Runtime never needs the source FBX skeletons.
 
 const SOURCES = {
+	"fall": "res://animations/Fall Flat.fbx",
 	"crawl": "res://animations/Zombie Crawl.fbx",
 	"attack": "res://animations/Zombie Punching.fbx",
 	"scream": "res://animations/Zombie Scream.fbx",
@@ -31,6 +32,7 @@ func bake() -> void:
 				SOURCES[clip], destination, clip in ["crawl", "feed_loop"], start, end
 			)
 		)
+	_blend_tail(library.get_animation("fall"), library.get_animation("crawl"), 0.25)
 	_blend_tail(library.get_animation("attack"), library.get_animation("attack"), 0.12)
 	_blend_tail(library.get_animation("feed_intro"), library.get_animation("feed_loop"), 0.2)
 	# Preserve the prone pelvis, spine and legs while the arms perform the gesture.

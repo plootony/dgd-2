@@ -1,7 +1,7 @@
 extends "res://characters/combat_actor.gd"
 ## Master-authoritative pursuit and telegraphed melee. Remote peers only present the state.
 
-enum State { IDLE, CHASE, SCREAM, ATTACK, BITE, FEED_APPROACH, FEED_INTRO, FEED_LOOP }
+enum State { IDLE, CHASE, SCREAM, ATTACK, BITE, FEED_APPROACH, FEED_INTRO, FEED_LOOP, FALL }
 
 @export var run_speed: float = 3.5
 @export var crawl_speed: float = 0.6
@@ -15,6 +15,7 @@ enum State { IDLE, CHASE, SCREAM, ATTACK, BITE, FEED_APPROACH, FEED_INTRO, FEED_
 
 var net_grounded: bool = false
 var net_alerted: bool = false
+var net_prone: bool = false
 @export var feed_seconds: float = 7.0
 @export var stagger_seconds: float = 0.22
 @export var stagger_speed: float = 0.45
@@ -52,7 +53,7 @@ func simulates() -> bool:
 
 
 func is_crawling() -> bool:
-	return not combat.is_dead() and float(combat.health) / combat.max_health < crawl_threshold
+	return not combat.is_dead() and net_prone
 
 
 func get_state() -> State:
@@ -149,6 +150,11 @@ func _physics_process(delta: float) -> void:
 				_set_state(State.CHASE)
 			elif _state_elapsed() >= animation.get_animation("zombie/feed_intro").length:
 				_set_state(State.FEED_LOOP)
+		State.FALL:
+			if _state_elapsed() >= animation.get_animation("zombie/fall").length:
+				net_prone = true
+				_crawl_time = 0.0
+				_set_state(State.FEED_APPROACH if is_instance_valid(_feed_corpse) else State.CHASE)
 		State.FEED_LOOP:
 			if not is_instance_valid(_feed_corpse) or _state_elapsed() >= feed_seconds:
 				_feed_corpse = null
@@ -200,6 +206,12 @@ func _start_melee() -> void:
 func _on_damaged(_amount: int, direction: Vector3) -> void:
 	if not simulates() or combat.is_dead():
 		return
+	if (
+		not net_prone
+		and get_state() != State.FALL
+		and float(combat.health) / combat.max_health < crawl_threshold
+	):
+		_set_state(State.FALL)
 	var side = signf(global_basis.x.dot(direction))
 	if is_zero_approx(side):
 		side = -net_stagger.y
@@ -302,7 +314,13 @@ func _can_hit(target: Variant) -> bool:
 
 
 func _update_collision() -> void:
-	var crawling = is_crawling()
+	var crawling = (
+		is_crawling()
+		or (
+			get_state() == State.FALL
+			and _state_elapsed() >= animation.get_animation("zombie/fall").length * 0.65
+		)
+	)
 	if crawling == _was_crawling:
 		return
 	_was_crawling = crawling
@@ -320,6 +338,8 @@ func _update_animation(delta: float) -> void:
 	var speed = Vector2(velocity.x, velocity.z).length()
 	var clip: StringName
 	match get_state():
+		State.FALL:
+			clip = &"zombie/fall"
 		State.SCREAM:
 			clip = &"zombie/crawl_scream" if crawling else &"zombie/scream"
 		State.ATTACK:
@@ -333,7 +353,8 @@ func _update_animation(delta: float) -> void:
 		_:
 			clip = &"zombie/crawl" if crawling else (&"Sprint" if speed > 0.2 else &"Idle")
 	var one_shot = (
-		get_state() in [State.SCREAM, State.ATTACK, State.BITE, State.FEED_INTRO, State.FEED_LOOP]
+		get_state()
+		in [State.SCREAM, State.ATTACK, State.BITE, State.FEED_INTRO, State.FEED_LOOP, State.FALL]
 	)
 	if clip != _clip or (one_shot and _shown_transition != int(net_behavior.z)):
 		animation.play(clip, 0.0 if one_shot or crawling else 0.12)
@@ -369,6 +390,7 @@ func combat_respawn(position: Vector3) -> void:
 	if simulates():
 		_teleport(position)
 		net_alerted = false
+		net_prone = false
 		net_stagger = Vector3(-100, 1, 0)
 		net_behavior = Vector3(State.IDLE, _clock(), net_behavior.z + 1.0)
 	super.combat_respawn(position)
