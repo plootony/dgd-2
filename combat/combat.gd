@@ -34,6 +34,8 @@ var _sequence = 0
 var _last_sequence = -1
 var _shots: Array[Dictionary] = []
 var confirmed_hits = 0
+var _shown_impact: int = 0
+var _shown_surface: int = 0
 var actor: CharacterBody3D
 var _replicator: FusionSharedReplicator
 var _eye_position: Callable
@@ -156,6 +158,9 @@ func _resolve_shot(shot: Dictionary) -> void:
 			DamageSource.PLAYER
 		)
 		confirmed_hits += 1
+		_publish_impact(hit.position, hit.normal, direction)
+	elif target == null and hit.collider is StaticBody3D:
+		_publish_surface(hit.position, hit.normal)
 
 
 func apply_damage(
@@ -221,3 +226,87 @@ func receive_state(
 	respawn_position = spawn_position
 	net_state = state
 	# Apply on the next physics tick, outside the network callback.
+
+
+func _publish_impact(point: Vector3, normal: Vector3, direction: Vector3) -> void:
+	var space = actor.get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(
+		point + direction * 0.03, point + direction * 3.0, 1
+	)
+	var surface = space.intersect_ray(query)
+	if surface.is_empty():
+		query = PhysicsRayQueryParameters3D.create(
+			point + Vector3.UP * 0.02, point + Vector3.DOWN * 2.5, 1
+		)
+		surface = space.intersect_ray(query)
+	var surface_point: Vector3 = surface.position if not surface.is_empty() else Vector3.ZERO
+	var surface_normal: Vector3 = surface.normal if not surface.is_empty() else Vector3.ZERO
+	var sequence = _shown_impact + 1
+	_show_impact(sequence, point, normal, direction, surface_point, surface_normal)
+	if Fusion.is_in_room():
+		Fusion.rpc(
+			Callable(actor, "rpc_blood_impact"),
+			sequence,
+			point,
+			normal,
+			direction,
+			surface_point,
+			surface_normal
+		)
+
+
+func receive_impact(
+	sequence: int,
+	point: Vector3,
+	normal: Vector3,
+	direction: Vector3,
+	surface_point: Vector3,
+	surface_normal: Vector3
+) -> void:
+	var room = Fusion.get_room()
+	if room == null or Fusion.get_rpc_sender() != room.get_master_client_id():
+		return
+	_show_impact(sequence, point, normal, direction, surface_point, surface_normal)
+
+
+func _show_impact(
+	sequence: int,
+	point: Vector3,
+	normal: Vector3,
+	direction: Vector3,
+	surface_point: Vector3,
+	surface_normal: Vector3
+) -> void:
+	if sequence <= _shown_impact:
+		return
+	_shown_impact = sequence
+	var container = (
+		actor.corpse_parent if is_instance_valid(actor.corpse_parent) else actor.get_parent()
+	)
+	preload("res://effects/blood_impact.gd").spawn(
+		container, point, normal, direction, surface_point, surface_normal
+	)
+
+
+func _publish_surface(point: Vector3, normal: Vector3) -> void:
+	var sequence = _shown_surface + 1
+	_show_surface(sequence, point, normal)
+	if Fusion.is_in_room():
+		Fusion.rpc(Callable(actor, "rpc_surface_impact"), sequence, point, normal)
+
+
+func receive_surface(sequence: int, point: Vector3, normal: Vector3) -> void:
+	var room = Fusion.get_room()
+	if room == null or Fusion.get_rpc_sender() != room.get_master_client_id():
+		return
+	_show_surface(sequence, point, normal)
+
+
+func _show_surface(sequence: int, point: Vector3, normal: Vector3) -> void:
+	if sequence <= _shown_surface:
+		return
+	_shown_surface = sequence
+	var container = (
+		actor.corpse_parent if is_instance_valid(actor.corpse_parent) else actor.get_parent()
+	)
+	preload("res://effects/surface_impact.gd").spawn(container, point, normal)

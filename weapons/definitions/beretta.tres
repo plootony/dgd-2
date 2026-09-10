@@ -15,3 +15,9 @@ run_pitch_degrees = -6.0
 run_vertical_offset = 0.015
 idle_cycle_seconds = 3.0
 clip_frames = {"idle": Vector2(480, 490), "aim": Vector2(480, 480), "shoot": Vector2(225, 247), "reload": Vector2(250, 335)}
+
+magazine_size = 15
+starting_reserve = 45
+muzzle_skeleton = NodePath("Armature_001/Skeleton3D")
+muzzle_bone = &"ARMA"
+muzzle_position = Vector3(-0.03931, 0.035, 0.419)

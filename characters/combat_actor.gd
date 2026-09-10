@@ -59,3 +59,20 @@ func rpc_combat_state(
 	source: int = 2
 ) -> void:
 	combat.receive_state(state, impulse, spawn_position, respawn_delay, source)
+
+
+@rpc("any_peer", "reliable")
+func rpc_blood_impact(
+	sequence: int,
+	point: Vector3,
+	normal: Vector3,
+	direction: Vector3,
+	surface_point: Vector3,
+	surface_normal: Vector3
+) -> void:
+	combat.receive_impact(sequence, point, normal, direction, surface_point, surface_normal)
+
+
+@rpc("any_peer", "reliable")
+func rpc_surface_impact(sequence: int, point: Vector3, normal: Vector3) -> void:
+	combat.receive_surface(sequence, point, normal)

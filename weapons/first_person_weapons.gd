@@ -6,6 +6,9 @@ signal shot_fired(slot: int)
 const WeaponCatalog = preload("res://weapons/weapon_catalog.gd")
 const WeaponAnimations = preload("res://weapons/weapon_animations.gd")
 
+var ammunition = preload("res://weapons/ammunition.gd").new()
+var _flashes: Array[Node3D] = []
+var _ammo_label: Label
 var selected_slot: int = 0
 var active: bool = false
 var _viewport: SubViewport
@@ -67,6 +70,22 @@ func _ready() -> void:
 	_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	add_child(_image)
 	_image.hide()
+	_ammo_label = Label.new()
+	_ammo_label.name = "AmmoCounter"
+	_ammo_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	_ammo_label.offset_left = -450
+	_ammo_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_ammo_label.offset_top = -85
+	_ammo_label.offset_right = -24
+	_ammo_label.offset_bottom = -24
+	_ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_ammo_label.add_theme_font_size_override("font_size", 24)
+	_ammo_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	_ammo_label.add_theme_constant_override("shadow_offset_x", 2)
+	_ammo_label.add_theme_constant_override("shadow_offset_y", 2)
+	_ammo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_ammo_label)
+	_ammo_label.hide()
 	get_viewport().size_changed.connect(_resize)
 	_resize()
 
@@ -82,6 +101,8 @@ func set_active(value: bool) -> void:
 	if active and _models.is_empty():
 		_load_models()
 	_image.visible = active
+	_ammo_label.visible = active
+	_update_ammo_label()
 	_viewport.render_target_update_mode = (
 		SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
 	)
@@ -103,6 +124,9 @@ func select_slot(slot: int) -> void:
 
 
 func _reset_action() -> void:
+	ammunition.cancel_reload()
+	for flash in _flashes:
+		flash.clear()
 	action = &"idle"
 	_elapsed = 0.0
 	_idle_time = 0.0
@@ -129,7 +153,7 @@ func request_fire() -> void:
 
 
 func request_reload() -> void:
-	if not active or action == &"reload":
+	if not active or action == &"reload" or not ammunition.begin_reload(selected_slot):
 		return
 	action = &"reload"
 	_elapsed = 0.0
@@ -146,6 +170,7 @@ func _process(delta: float) -> void:
 	if action == &"shoot" and _elapsed >= definition.shot_seconds:
 		action = &"idle"
 	if action == &"reload" and _elapsed >= player.get_animation("viewmodel/reload").length:
+		ammunition.finish_reload()
 		action = &"idle"
 		_elapsed = 0.0
 	if (
@@ -153,11 +178,12 @@ func _process(delta: float) -> void:
 		and _controls_enabled
 		and (_fire_pending or (definition.automatic and _fire_held))
 	):
-		if action != &"shoot":
+		if action != &"shoot" and ammunition.consume(selected_slot):
 			action = &"shoot"
 			_elapsed = 0.0
 			shots_played += 1
 			shot_fired.emit(selected_slot)
+			_flashes[selected_slot].trigger()
 		_fire_pending = false
 	var wants_aim = _aim_held and action != &"reload"
 	var wants_run = _running and not wants_aim and action == &"idle" and not _fire_held
@@ -191,6 +217,8 @@ func _process(delta: float) -> void:
 	)
 	transform = run_transform * transform
 	_models[selected_slot].transform = transform
+	_flashes[selected_slot].follow_bone()
+	_update_ammo_label()
 
 
 func _sample(player: AnimationPlayer, clip: StringName, time: float) -> void:
@@ -226,3 +254,33 @@ func _load_models() -> void:
 		_players.append(player)
 		WeaponAnimations.build_library(player, definition)
 		_sample(player, &"idle", 0.0)
+		var flash = preload("res://weapons/muzzle_flash.gd").new()
+		flash.configure(model, definition)
+		_flashes.append(flash)
+
+
+func reset_ammunition() -> void:
+	_reset_action()
+	ammunition.reset()
+	_update_ammo_label()
+
+
+func _update_ammo_label() -> void:
+	var status = (
+		"  •  ПЕРЕЗАРЯДКА"
+		if action == &"reload"
+		else (
+			"  •  R"
+			if ammunition.magazines[selected_slot] == 0 and ammunition.reserves[selected_slot] > 0
+			else ""
+		)
+	)
+	_ammo_label.text = (
+		"%s\n%d / %d%s"
+		% [
+			WeaponCatalog.DEFINITIONS[selected_slot].display_name,
+			ammunition.magazines[selected_slot],
+			ammunition.reserves[selected_slot],
+			status
+		]
+	)

@@ -3,6 +3,11 @@ extends Resource
 
 @export var display_name: String
 @export_file("*.glb") var model_path: String
+@export var magazine_size: int = 30
+@export var starting_reserve: int = 90
+@export var muzzle_skeleton: NodePath
+@export var muzzle_bone: StringName
+@export var muzzle_position: Vector3
 @export var damage: int = 34
 @export var shot_seconds: float = 0.12
 @export var automatic: bool = true

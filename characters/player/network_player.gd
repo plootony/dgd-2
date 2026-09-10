@@ -264,6 +264,7 @@ func _update_death_camera(delta: float) -> void:
 
 func combat_respawn(pos: Vector3) -> void:
 	if is_local():
+		first_person_weapons.reset_ammunition()
 		respawn(pos)
 		rig.global_position = global_position + Vector3.UP * _eye_height
 		rig.global_rotation = Vector3(net_pitch, _yaw, 0)
@@ -296,6 +297,10 @@ func fire_weapon(slot: int) -> void:
 
 
 func _create_corpse(initial_velocity: Vector3, container: Node) -> Node3D:
+	var corpse: Node3D
 	if combat.death_source == combat.DamageSource.PLAYER:
-		return super._create_corpse(initial_velocity, container)
-	return preload("res://combat/animated_corpse.gd").spawn(self, container)
+		corpse = super._create_corpse(initial_velocity, container)
+	else:
+		corpse = preload("res://combat/animated_corpse.gd").spawn(self, container)
+	preload("res://effects/blood_pool.gd").attach(corpse)
+	return corpse
