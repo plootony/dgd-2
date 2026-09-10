@@ -104,3 +104,9 @@ func _physics_process(delta: float) -> void:
 	_age += delta
 	if _age >= LIFETIME:
 		queue_free()
+
+
+func get_focus_position() -> Vector3:
+	if not bodies.is_empty() and is_instance_valid(bodies[0]):
+		return bodies[0].global_position
+	return global_position

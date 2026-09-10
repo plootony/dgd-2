@@ -4,6 +4,7 @@ extends CharacterBody3D
 const Ragdoll = preload("res://combat/ragdoll.gd")
 
 var corpse_parent: Node
+var last_corpse: Node3D
 
 @onready var combat = $Combat
 @onready var replicator: FusionSharedReplicator = $FusionReplicator
@@ -41,10 +42,20 @@ func combat_respawn(_position: Vector3) -> void:
 
 func _on_combat_died(initial_velocity: Vector3) -> void:
 	var container = corpse_parent if is_instance_valid(corpse_parent) else get_parent()
-	Ragdoll.spawn(self, initial_velocity, container)
+	last_corpse = _create_corpse(initial_velocity, container)
 	combat_die()
 
 
+func _create_corpse(initial_velocity: Vector3, container: Node) -> Node3D:
+	return Ragdoll.spawn(self, initial_velocity, container)
+
+
 @rpc("any_peer", "call_local", "reliable")
-func rpc_combat_state(state: Vector3, impulse: Vector3, spawn_position: Vector3) -> void:
-	combat.receive_state(state, impulse, spawn_position)
+func rpc_combat_state(
+	state: Vector3,
+	impulse: Vector3,
+	spawn_position: Vector3,
+	respawn_delay: float = 5.0,
+	source: int = 2
+) -> void:
+	combat.receive_state(state, impulse, spawn_position, respawn_delay, source)

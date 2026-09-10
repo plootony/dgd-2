@@ -61,14 +61,17 @@ func run():
 		check(p.combat.health == 100, "shooter unharmed")
 		check(get_nodes_in_group("Ragdolls").size() == 1, "remote corpse visible")
 		p.camera.look_at(tony.global_position + Vector3.UP * 1.0)
-		for i in 3:
+		for i in 4:
 			p.fire_weapon(0)
 			await create_timer(0.2).timeout
 		await create_timer(0.6).timeout
 		check(tony.combat.health == 0, "client raycasts kill Tony")
 		await create_timer(6).timeout
 		check(other.combat.health == 100 and other.combat.life == 1, "remote respawn replicated")
-		check(tony.combat.health == 100 and tony.combat.life == 1, "Tony respawn replicated")
+		check(
+			tony.combat.health == tony.combat.max_health and tony.combat.life == 1,
+			"Tony respawn replicated"
+		)
 	else:
 		await create_timer(1.7).timeout
 		check(p.combat.health == 0, "host receives lethal damage")
@@ -83,7 +86,10 @@ func run():
 		check(tony.combat.health == 0, "host sees Tony death")
 		await create_timer(6).timeout
 		check(p.combat.health == 100 and p.combat.life == 1, "host respawn")
-		check(tony.combat.health == 100 and tony.combat.life == 1, "host Tony respawn")
+		check(
+			tony.combat.health == tony.combat.max_health and tony.combat.life == 1,
+			"host Tony respawn"
+		)
 	print("NETWORK_TEST_FAILURES=", failures, " role=", role)
 	await create_timer(1).timeout
 	Fusion.disconnect_from_photon()

@@ -14,7 +14,7 @@ height = 1.8
 radius = 0.2
 
 [sub_resource type="FusionReplicationConfig" id="replication"]
-property_count = 7
+property_count = 9
 properties/0/path = NodePath(":net_crouched")
 properties/0/interpolate = 0
 properties/1/path = NodePath(":net_grounded")
@@ -30,6 +30,12 @@ properties/5/path = NodePath("Combat:respawn_position")
 properties/5/interpolate = 0
 properties/6/path = NodePath("Combat:net_state")
 properties/6/interpolate = 0
+
+properties/7/path = NodePath("Combat:respawn_delay")
+properties/7/interpolate = 0
+
+properties/8/path = NodePath("Combat:death_source")
+properties/8/interpolate = 0
 
 [node name="Player" type="CharacterBody3D" groups=["Players"]]
 collision_layer = 2

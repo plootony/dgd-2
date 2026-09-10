@@ -50,6 +50,10 @@ func _ready() -> void:
 	_label("ПРЫЖКИ · 0.35—1.55 м", Vector3(-3, 2.7, -4.5))
 	_label("ПРИСЕД · ПРОСВЕТ 1.30 м", Vector3(8, 2.5, 3))
 	_label("СТУПЕНИ", Vector3(-12, 2.5, 2))
+	var navigation_region = NavigationRegion3D.new()
+	navigation_region.name = "NavigationRegion3D"
+	navigation_region.navigation_mesh = preload("res://world/test_arena_navigation.res")
+	add_child(navigation_region)
 
 
 func _block(label: String, pos: Vector3, size: Vector3, color: Color, solid: bool = true) -> void:

@@ -26,12 +26,14 @@ func run():
 	await physics_frame
 	var shot = {"origin": Vector3(0, 1, 6), "direction": Vector3.FORWARD, "slot": 0, "life": 0}
 	player.combat._resolve_shot(shot)
-	check(tony.combat.health == 66, "raycast hits Tony; shooter excluded")
+	check(tony.combat.health == tony.combat.max_health - 34, "raycast hits Tony; shooter excluded")
 	player.combat._resolve_shot(shot)
 	player.combat._resolve_shot(shot)
 	await physics_frame
 	await physics_frame
-	check(tony.combat.is_dead(), "three rifle hits kill Tony")
+	player.combat._resolve_shot(shot)
+	await physics_frame
+	check(tony.combat.is_dead(), "lethal rifle damage kills Tony")
 	check(
 		not tony.get_node("Visual").visible and tony.get_node("CollisionShape3D").disabled,
 		"dead actor invisible and noncolliding"
@@ -68,13 +70,13 @@ func run():
 	tony.global_position = Vector3(0, 0, 0)
 	await physics_frame
 	player.combat._resolve_shot(shot)
-	check(tony.combat.health == 100, "wall blocks damage")
+	check(tony.combat.health == tony.combat.max_health, "wall blocks damage")
 	wall.queue_free()
 	await physics_frame
 	# Player death and respawn also restore local weapons and collision.
 	player.third_person = false
 	player._update_view()
-	player.combat.apply_damage(100, Vector3.BACK)
+	player.combat.apply_damage(100, Vector3.BACK, 5.0, player.combat.DamageSource.PLAYER)
 	await physics_frame
 	check(
 		player.combat.is_dead() and not player.first_person_weapons.active,
@@ -102,8 +104,9 @@ func run():
 	remote.global_position = Vector3.ZERO
 	player.set_process(false)
 	player.global_position = Vector3(0, 0, 6)
-	player.camera.global_position = Vector3(0, 1.62, 6)
-	player.camera.look_at(Vector3(0, 1, 0))
+	player.rig.global_position = Vector3(0, 1.62, 6)
+	player.rig.look_at(Vector3(0, 1, 0))
+	player.camera.transform = Transform3D.IDENTITY
 	var weapons = player.first_person_weapons
 	weapons.set_process(false)
 	weapons.select_slot(1)

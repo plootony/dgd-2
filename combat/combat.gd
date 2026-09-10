@@ -1,13 +1,20 @@
 extends Node3D
 ## Master validates shots and broadcasts state through each networked actor.
 ## The owner also snapshots that state for late joiners. Revisions reject stale snapshots.
+signal damaged(amount: int, direction: Vector3)
 signal died(initial_velocity: Vector3)
 signal respawned(position: Vector3)
+
+enum DamageSource { PLAYER, ZOMBIE, WORLD }
 
 const MAX_HEALTH = 100
 const WeaponCatalog = preload("res://weapons/weapon_catalog.gd")
 const RANGE = 200.0
 const RESPAWN_SECONDS = 5.0
+@export_range(1, 10000) var max_health: int = MAX_HEALTH
+
+var death_source: int = DamageSource.WORLD
+var respawn_delay: float = RESPAWN_SECONDS
 var health: int = MAX_HEALTH
 var life: int = 0
 var death_velocity: Vector3 = Vector3.ZERO
@@ -36,6 +43,8 @@ var _respawn_position: Callable
 func configure(
 	body: CharacterBody3D, network: FusionSharedReplicator, eyes: Callable, spawn: Callable
 ) -> void:
+	if net_state.z == 0.0:
+		net_state = Vector3(max_health, 0, 0)
 	actor = body
 	_replicator = network
 	_eye_position = eyes
@@ -107,10 +116,11 @@ func _physics_process(delta: float) -> void:
 	if is_dead():
 		_shots.clear()
 		_dead_time += delta
-		if _dead_time >= RESPAWN_SECONDS:
+		if _dead_time >= respawn_delay:
 			respawn_position = _respawn_position.call()
 			life += 1
-			health = MAX_HEALTH
+			health = max_health
+			respawn_delay = RESPAWN_SECONDS
 			_dead_time = 0.0
 			_publish_state()
 			_sync_presentation()
@@ -139,17 +149,33 @@ func _resolve_shot(shot: Dictionary) -> void:
 		return
 	var target = hit.collider.get_node_or_null("Combat")
 	if target != null and target != self and not target.is_dead():
-		target.apply_damage(WeaponCatalog.DEFINITIONS[shot.slot].damage, direction)
+		target.apply_damage(
+			WeaponCatalog.DEFINITIONS[shot.slot].damage,
+			direction,
+			RESPAWN_SECONDS,
+			DamageSource.PLAYER
+		)
 		confirmed_hits += 1
 
 
-func apply_damage(amount: int, direction: Vector3) -> void:
+func apply_damage(
+	amount: int,
+	direction: Vector3,
+	death_delay: float = RESPAWN_SECONDS,
+	source: int = DamageSource.WORLD
+) -> void:
 	if not is_authority() or is_dead() or amount <= 0:
 		return
 	death_velocity = actor.velocity + direction.normalized() * 2.5
+	var applied_damage = mini(health, amount)
 	health = maxi(0, health - amount)
+	if is_dead():
+		death_source = source
+		respawn_delay = maxf(RESPAWN_SECONDS, death_delay)
 	_publish_state()
 	_sync_presentation()
+	if not is_dead():
+		damaged.emit(applied_damage, direction)
 
 
 func _sync_presentation() -> void:
@@ -167,15 +193,30 @@ func _sync_presentation() -> void:
 func _publish_state() -> void:
 	net_state = Vector3(health, life, net_state.z + 1)
 	if Fusion.is_in_room():
-		Fusion.rpc(Callable(actor, "rpc_combat_state"), net_state, death_velocity, respawn_position)
+		Fusion.rpc(
+			Callable(actor, "rpc_combat_state"),
+			net_state,
+			death_velocity,
+			respawn_position,
+			respawn_delay,
+			death_source
+		)
 
 
-func receive_state(state: Vector3, impulse: Vector3, spawn_position: Vector3) -> void:
+func receive_state(
+	state: Vector3,
+	impulse: Vector3,
+	spawn_position: Vector3,
+	death_delay: float = RESPAWN_SECONDS,
+	source: int = DamageSource.WORLD
+) -> void:
 	var room = Fusion.get_room()
 	if room == null or Fusion.get_rpc_sender() != room.get_master_client_id():
 		return
 	if state.z < net_state.z:
 		return
+	death_source = source
+	respawn_delay = death_delay
 	death_velocity = impulse
 	respawn_position = spawn_position
 	net_state = state

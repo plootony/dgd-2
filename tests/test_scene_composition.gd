@@ -22,7 +22,7 @@ func run() -> void:
 	assert(player.combat.actor == player and tony.combat.actor == tony)
 	assert(player.has_method("rpc_combat_state") and tony.has_method("rpc_combat_state"))
 	player.combat.apply_damage(100, Vector3.FORWARD)
-	tony.combat.apply_damage(100, Vector3.BACK)
+	tony.combat.apply_damage(tony.combat.max_health, Vector3.BACK)
 	await physics_frame
 	await physics_frame
 	assert(corpses.get_child_count() == 2)

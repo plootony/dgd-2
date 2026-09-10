@@ -26,6 +26,8 @@ var _land_time: float = 0.0
 var _was_grounded: bool = false
 var _meshes: Array[MeshInstance3D] = []
 var first_person_weapons: CanvasLayer
+var _death_camera_time: float = 0.0
+var _death_camera_origin: Vector3
 
 @onready var model: Node3D = $Visual/Model
 @onready var rig: Node3D = $CameraRig
@@ -151,6 +153,8 @@ func _apply_height() -> void:
 
 func _process(delta: float) -> void:
 	if combat.is_dead():
+		if is_local():
+			_update_death_camera(delta)
 		return
 	if not is_local():
 		_apply_height()
@@ -241,15 +245,29 @@ func combat_die() -> void:
 	_jump_requested = false
 	if is_local():
 		first_person_weapons.set_active(false)
-		# Fixed death camera watches the detached physical body fall.
-		rig.global_position += Vector3.UP * 0.7
-		arm.spring_length = 3.5
-		rig.rotation.x = deg_to_rad(-20)
+		_death_camera_time = 0.0
+		_death_camera_origin = camera.global_position
+		rig.global_position = _death_camera_origin
+		arm.spring_length = 0.0
+
+
+func _update_death_camera(delta: float) -> void:
+	_death_camera_time += delta
+	var focus = (
+		last_corpse.get_focus_position() if is_instance_valid(last_corpse) else global_position
+	)
+	var progress = smoothstep(0.0, 1.5, _death_camera_time)
+	arm.spring_length = 4.5 * progress
+	rig.global_position = _death_camera_origin.lerp(focus + Vector3.UP * 0.3, progress)
+	rig.global_rotation = Vector3(lerpf(net_pitch, deg_to_rad(-45), progress), _yaw, 0)
 
 
 func combat_respawn(pos: Vector3) -> void:
 	if is_local():
 		respawn(pos)
+		rig.global_position = global_position + Vector3.UP * _eye_height
+		rig.global_rotation = Vector3(net_pitch, _yaw, 0)
+		_death_camera_time = 0.0
 	super.combat_respawn(pos)
 	nickname.visible = not is_local()
 	_clip = ""
@@ -275,3 +293,9 @@ func fire_weapon(slot: int) -> void:
 	if not is_local() or combat.is_dead() or third_person or not input_enabled:
 		return
 	combat.request_shot(slot, camera.global_position, -camera.global_basis.z)
+
+
+func _create_corpse(initial_velocity: Vector3, container: Node) -> Node3D:
+	if combat.death_source == combat.DamageSource.PLAYER:
+		return super._create_corpse(initial_velocity, container)
+	return preload("res://combat/animated_corpse.gd").spawn(self, container)

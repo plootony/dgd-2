@@ -1,14 +1,16 @@
-[gd_scene load_steps=7 format=3]
-[ext_resource type="Script" path="res://characters/tony/tony.gd" id="1"]
+[gd_scene load_steps=8 format=3]
+[ext_resource type="Script" path="res://characters/zombie/zombie_controller.gd" id="1"]
 [ext_resource type="PackedScene" path="res://Tony/Tony.glb" id="2"]
 [ext_resource type="AnimationLibrary" path="res://animations/tony_locomotion.res" id="3"]
 [ext_resource type="PackedScene" path="res://combat/combat.tscn" id="combat"]
+
+[ext_resource type="AnimationLibrary" path="res://characters/zombie/tony_zombie_animations.res" id="zombie_animations"]
 
 [sub_resource type="CapsuleShape3D" id="shape"]
 radius = 0.32
 height = 1.9
 [sub_resource type="FusionReplicationConfig" id="config"]
-property_count = 4
+property_count = 9
 properties/0/path = NodePath(":net_grounded")
 properties/0/interpolate = 1
 properties/1/path = NodePath("Combat:death_velocity")
@@ -17,6 +19,21 @@ properties/2/path = NodePath("Combat:respawn_position")
 properties/2/interpolate = 0
 properties/3/path = NodePath("Combat:net_state")
 properties/3/interpolate = 0
+
+properties/4/path = NodePath(":net_behavior")
+properties/4/interpolate = 0
+
+properties/5/path = NodePath(":net_alerted")
+properties/5/interpolate = 0
+
+properties/6/path = NodePath(":net_stagger")
+properties/6/interpolate = 0
+
+properties/7/path = NodePath("Combat:respawn_delay")
+properties/7/interpolate = 0
+
+properties/8/path = NodePath("Combat:death_source")
+properties/8/interpolate = 0
 
 [node name="Tony" type="CharacterBody3D" groups=["NPCs"]]
 collision_layer = 2
@@ -41,6 +58,7 @@ rotation = Vector3(0,3.14159265,0)
 [node name="Model" parent="Visual" instance=ExtResource("2")]
 [node name="Locomotion" type="AnimationPlayer" parent="Visual/Model"]
 libraries/ = ExtResource("3")
+libraries/zombie = ExtResource("zombie_animations")
 [node name="Label" type="Label3D" parent="."]
 position = Vector3(0,2.1,0)
 text = "TONY"
@@ -49,3 +67,12 @@ font_size = 36
 pixel_size = 0.005
 
 [node name="Combat" parent="." instance=ExtResource("combat")]
+
+max_health = 125
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.35
+target_desired_distance = 0.9
+path_max_distance = 2.0
+radius = 0.4
+height = 1.9
