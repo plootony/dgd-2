@@ -1,5 +1,5 @@
 extends SceneTree
-## Retarget Mixamo motion to Tony. Runtime never needs the source FBX skeletons.
+## Retarget Mixamo motion to Tony, or Bogdan with --bogdan.
 
 const SOURCES = {
 	"fall": "res://animations/Fall Flat.fbx",
@@ -19,7 +19,11 @@ func _initialize() -> void:
 
 
 func bake() -> void:
-	var target = load("res://Tony/Tony.glb").instantiate()
+	var bogdan = "--bogdan" in OS.get_cmdline_user_args()
+	var target = (
+		load("res://characters/bogdan/Bogdan.glb" if bogdan else "res://Tony/Tony.glb")
+		. instantiate()
+	)
 	root.add_child(target)
 	var destination: Skeleton3D = target.find_child("Skeleton3D", true, false)
 	var library = AnimationLibrary.new()
@@ -41,7 +45,14 @@ func bake() -> void:
 			"crawl_" + clip,
 			_prone_gesture(library.get_animation("crawl"), library.get_animation(clip))
 		)
-	assert(ResourceSaver.save(library, OUTPUT) == OK)
+	assert(
+		(
+			ResourceSaver.save(
+				library, "res://characters/bogdan/zombie_animations.res" if bogdan else OUTPUT
+			)
+			== OK
+		)
+	)
 	for clip in library.get_animation_list():
 		print("BAKED_ZOMBIE ", clip, " ", library.get_animation(clip).length)
 	target.free()

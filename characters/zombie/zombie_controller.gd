@@ -3,8 +3,8 @@ extends "res://characters/combat_actor.gd"
 
 enum State { IDLE, CHASE, SCREAM, ATTACK, BITE, FEED_APPROACH, FEED_INTRO, FEED_LOOP, FALL }
 
-@export var run_speed: float = 3.5
-@export var crawl_speed: float = 0.6
+@export var run_speed: float = 7.0
+@export var crawl_speed: float = 1.2
 @export var attack_range: float = 1.65
 @export var attack_damage: int = 20
 @export var attack_hit_time: float = 0.8
@@ -39,13 +39,14 @@ var _crawl_time: float = 0.0
 
 @onready var navigation: NavigationAgent3D = $NavigationAgent3D
 @onready var name_label: Label3D = $Label
+@onready var _spawn_position: Vector3 = global_position + Vector3.UP * 0.8
 
 
 func _ready() -> void:
 	super._ready()
 	combat.damaged.connect(_on_damaged)
 	collider.shape = collider.shape.duplicate()
-	name_label.text = "TONY / ЗОМБИ"
+	name_label.text += " / ЗОМБИ"
 
 
 func simulates() -> bool:
@@ -416,7 +417,7 @@ func _teleport(position: Vector3) -> void:
 
 
 func get_respawn_position() -> Vector3:
-	return Vector3(4, 1, 7)
+	return _spawn_position
 
 
 func get_eye_position() -> Vector3:

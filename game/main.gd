@@ -31,7 +31,8 @@ func _ready() -> void:
 	ui.graphics_requested.connect(graphics_settings.open)
 	ui.resume_requested.connect(_resume_game)
 	$Players.child_entered_tree.connect(_configure_actor)
-	_configure_actor($Tony)
+	for zombie in get_tree().get_nodes_in_group("NPCs"):
+		_configure_actor(zombie)
 	Fusion.connected_to_photon.connect(_join_room)
 	Fusion.room_joined.connect(_room_joined)
 	Fusion.connection_failed.connect(_connection_failed)

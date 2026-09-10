@@ -32,7 +32,7 @@ func run():
 	game = current_scene
 	game.start_offline()
 	player = game.local_player
-	zombie = game.get_node("Tony")
+	zombie = preload("res://tests/zombie_fixture.gd").select(game)
 	player.set_physics_process(false)
 	zombie.set_physics_process(false)
 	player.global_position = Vector3(0, 0, 6)

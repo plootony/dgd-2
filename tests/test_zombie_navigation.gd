@@ -10,7 +10,7 @@ func run():
 	await scene_changed
 	current_scene.start_offline()
 	var player = current_scene.local_player
-	var zombie = current_scene.get_node("Tony")
+	var zombie = preload("res://tests/zombie_fixture.gd").select(current_scene)
 	player.set_physics_process(false)
 	player.global_position = Vector3(9, 0, -13)
 	zombie.global_position = Vector3(9, 0, -5)
@@ -40,7 +40,12 @@ func run():
 	var skeleton: Skeleton3D = zombie.get_node("Visual/Model/Armature/Skeleton3D")
 	var hip_height = skeleton.get_bone_pose_position(skeleton.find_bone("Hips")).y
 	print("CRAWL z=", zombie.global_position.z, " hip_height=", hip_height)
-	if zombie.global_position.z < 0.3 or zombie.global_position.z > 1.4 or hip_height > 0.4:
+	var expected_distance = zombie.crawl_speed * 1.5
+	if (
+		zombie.global_position.z < expected_distance * 0.5
+		or zombie.global_position.z > expected_distance * 1.5
+		or hip_height > 0.4
+	):
 		push_error("Crawling must move slowly with a genuinely low skeleton pose")
 		quit(1)
 		return

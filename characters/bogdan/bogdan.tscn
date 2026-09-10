@@ -1,11 +1,11 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" path="res://characters/zombie/zombie.tscn" id="base"]
-[ext_resource type="PackedScene" path="res://Tony/Tony.glb" id="model"]
-[ext_resource type="AnimationLibrary" path="res://animations/tony_locomotion.res" id="locomotion"]
-[ext_resource type="AnimationLibrary" path="res://characters/zombie/tony_zombie_animations.res" id="actions"]
+[ext_resource type="PackedScene" path="res://characters/bogdan/Bogdan.glb" id="model"]
+[ext_resource type="AnimationLibrary" path="res://characters/bogdan/locomotion.res" id="locomotion"]
+[ext_resource type="AnimationLibrary" path="res://characters/bogdan/zombie_animations.res" id="actions"]
 
-[node name="Tony" instance=ExtResource("base")]
+[node name="Bogdan" instance=ExtResource("base")]
 
 [node name="Model" parent="Visual" index="0" instance=ExtResource("model")]
 
@@ -14,4 +14,4 @@ libraries/ = ExtResource("locomotion")
 libraries/zombie = ExtResource("actions")
 
 [node name="Label" parent="." index="3"]
-text = "TONY"
+text = "BOGDAN"

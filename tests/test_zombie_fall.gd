@@ -16,7 +16,7 @@ func run():
 	change_scene_to_file("res://game/main.tscn")
 	await scene_changed
 	current_scene.start_offline()
-	var zombie = current_scene.get_node("Tony")
+	var zombie = preload("res://tests/zombie_fixture.gd").select(current_scene)
 	var player = current_scene.local_player
 	player.set_physics_process(false)
 	zombie.set_physics_process(false)

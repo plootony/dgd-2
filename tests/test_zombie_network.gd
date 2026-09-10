@@ -42,7 +42,7 @@ func run() -> void:
 	change_scene_to_file("res://game/main.tscn")
 	await scene_changed
 	var game = current_scene
-	var zombie = game.get_node("Tony")
+	var zombie = preload("res://tests/zombie_fixture.gd").select(game)
 	zombie.set_physics_process(false)
 	var deadline = Time.get_ticks_msec() + 45000
 	while (
