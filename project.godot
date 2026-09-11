@@ -22,6 +22,10 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/weapon_sway/plugin.cfg", "res://addons/weapon_control/plugin.cfg")
+
 [fusion]
 
 connection/app_id="30d40b50-4d67-4979-a0d7-204c1f2f0e6a"
@@ -36,3 +40,7 @@ common/physics_interpolation=true
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+
+[weapon_sway]
+
+profile_directory="res://weapon_sway_profiles"

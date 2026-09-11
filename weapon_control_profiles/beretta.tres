@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WeaponControlProfile" format=3 uid="uid://ccwa1kefncc7o"]
+
+[ext_resource type="Script" uid="uid://cq2nkuvhdna8q" path="res://addons/weapon_control/fire_mode.gd" id="mode"]
+[ext_resource type="Script" uid="uid://dmawkcqhtsvir" path="res://addons/weapon_control/weapon_profile.gd" id="profile"]
+
+[sub_resource type="Resource" id="auto"]
+script = ExtResource("mode")
+enabled = false
+yaw_pattern = PackedFloat32Array(-0.1, 0.1, 0.15, -0.05)
+
+[sub_resource type="Resource" id="burst"]
+script = ExtResource("mode")
+enabled = false
+yaw_pattern = PackedFloat32Array(-0.1, 0.1, 0.15, -0.05)
+
+[sub_resource type="Resource" id="single"]
+script = ExtResource("mode")
+unlimited_single_clicks = true
+hip_spread = 1.4
+ads_spread = 0.12
+spread_per_shot = 0.18
+max_extra_spread = 2.5
+spread_recovery = 4.5
+pitch_kick = 1.0
+lateral_drift = 0.02
+yaw_pattern = PackedFloat32Array(-0.1, 0.1, 0.15, -0.05)
+visual_pitch = 3.5
+kickback = 0.025
+
+[resource]
+script = ExtResource("profile")
+display_name = "Beretta"
+single = SubResource("single")
+burst = SubResource("burst")
+automatic = SubResource("auto")

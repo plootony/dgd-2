@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 signal shot_fired(slot: int)
+signal recoil_kicked(pitch_yaw: Vector2)
 ## Local-only viewmodels; this node is never created for remote players.
 
 const WeaponCatalog = preload("res://weapons/weapon_catalog.gd")
@@ -24,12 +25,32 @@ var _elapsed: float = 0.0
 var _idle_time: float = 0.0
 var _run_time: float = 0.0
 var _fire_pending: bool = false
+var _mode_selection: Dictionary = {}
+var _fire_cooldown: float = 0.0
+var _burst_remaining: int = 0
+var _recoil = preload("res://addons/weapon_control/recoil_motion.gd").new()
 var _fire_held: bool = false
 var _aim_held: bool = false
 var _running: bool = false
 var _controls_enabled: bool = false
 var _hip: Array[Transform3D] = []
 var _aim: Array[Transform3D] = []
+var _sway = preload("res://addons/weapon_sway/sway_motion.gd").new()
+var _look_delta := Vector2.ZERO
+var _sway_stance: int = 0
+var _sway_moving: bool = false
+var _sway_focused: bool = false
+
+
+func update_sway_context(crouched: bool, moving: bool, focused: bool) -> void:
+	_sway_stance = 1 if crouched else 0
+	_sway_moving = _controls_enabled and moving
+	_sway_focused = _controls_enabled and focused
+
+
+func add_look_delta(pitch_yaw: Vector2) -> void:
+	if active and _controls_enabled:
+		_look_delta += pitch_yaw
 
 
 func _ready() -> void:
@@ -124,6 +145,14 @@ func select_slot(slot: int) -> void:
 
 
 func _reset_action() -> void:
+	_burst_remaining = 0
+	_fire_cooldown = 0.0
+	_recoil.reset()
+	_sway_stance = 0
+	_sway_moving = false
+	_sway_focused = false
+	_sway.reset()
+	_look_delta = Vector2.ZERO
 	ammunition.cancel_reload()
 	for flash in _flashes:
 		flash.clear()
@@ -145,17 +174,82 @@ func update_controls(enabled: bool, fire_held: bool, aim_held: bool, running: bo
 	_running = _controls_enabled and running
 	if not _controls_enabled:
 		_fire_pending = false
+		_burst_remaining = 0
+		_recoil.reset()
+		_sway.reset()
+		_look_delta = Vector2.ZERO
+
+
+func selected_fire_mode() -> int:
+	var profile = WeaponCatalog.DEFINITIONS[selected_slot].control_profile
+	var selected: int = _mode_selection.get(selected_slot, profile.initial_mode())
+	return selected if selected in profile.available_modes() else profile.initial_mode()
+
+
+func cycle_fire_mode() -> void:
+	if not active or not _controls_enabled or action == &"reload":
+		return
+	var available = WeaponCatalog.DEFINITIONS[selected_slot].control_profile.available_modes()
+	if available.is_empty():
+		return
+	_mode_selection[selected_slot] = available[
+		(available.find(selected_fire_mode()) + 1) % available.size()
+	]
+	_burst_remaining = 0
+	_fire_pending = false
+	_recoil.reset()
+	_update_ammo_label()
+
+
+func current_mode():
+	return WeaponCatalog.DEFINITIONS[selected_slot].control_profile.mode(selected_fire_mode())
 
 
 func request_fire() -> void:
-	if active and action != &"reload":
+	if not active or not _controls_enabled or action == &"reload":
+		return
+	var mode = current_mode()
+	if mode == null or not mode.enabled:
+		return
+	if selected_fire_mode() == 1:
+		if _burst_remaining > 0:
+			return
+		_burst_remaining = mode.burst_count
+	if _fire_cooldown <= 0 or (selected_fire_mode() == 0 and mode.unlimited_single_clicks):
+		_shoot()
+	else:
 		_fire_pending = true
+
+
+func _shoot() -> void:
+	var mode = current_mode()
+	if mode == null or not mode.enabled:
+		return
+	if not ammunition.consume(selected_slot):
+		_burst_remaining = 0
+		_fire_pending = false
+		return
+	_fire_cooldown = mode.interval
+	_fire_pending = false
+	_burst_remaining = maxi(0, _burst_remaining - 1)
+	action = &"shoot"
+	_elapsed = 0.0
+	shots_played += 1
+	_sample(_players[selected_slot], &"shoot", 0.0)
+	shot_fired.emit(selected_slot)
+	var profile = WeaponCatalog.DEFINITIONS[selected_slot].control_profile
+	var focused = _sway_focused and _aim_held
+	var multiplier = profile.recoil_multiplier(_sway_stance == 1, _sway_moving, focused)
+	multiplier *= lerpf(1.0, mode.ads_recoil_multiplier, aim_blend)
+	recoil_kicked.emit(_recoil.shot(mode, multiplier))
+	_flashes[selected_slot].trigger()
 
 
 func request_reload() -> void:
 	if not active or action == &"reload" or not ammunition.begin_reload(selected_slot):
 		return
 	action = &"reload"
+	_burst_remaining = 0
 	_elapsed = 0.0
 	_fire_pending = false
 
@@ -164,6 +258,7 @@ func _process(delta: float) -> void:
 	if not active or _models.is_empty():
 		return
 	_elapsed += delta
+	_fire_cooldown = maxf(_fire_cooldown - delta, 0.0)
 	_idle_time += delta
 	var player = _players[selected_slot]
 	var definition = WeaponCatalog.DEFINITIONS[selected_slot]
@@ -176,14 +271,10 @@ func _process(delta: float) -> void:
 	if (
 		action != &"reload"
 		and _controls_enabled
-		and (_fire_pending or (definition.automatic and _fire_held))
+		and (_fire_pending or _burst_remaining > 0 or (selected_fire_mode() == 2 and _fire_held))
+		and _fire_cooldown <= 0.000001
 	):
-		if action != &"shoot" and ammunition.consume(selected_slot):
-			action = &"shoot"
-			_elapsed = 0.0
-			shots_played += 1
-			shot_fired.emit(selected_slot)
-			_flashes[selected_slot].trigger()
+		_shoot()
 		_fire_pending = false
 	var wants_aim = _aim_held and action != &"reload"
 	var wants_run = _running and not wants_aim and action == &"idle" and not _fire_held
@@ -216,7 +307,21 @@ func _process(delta: float) -> void:
 		(Vector3(0.01, definition.run_vertical_offset, 0.01) + bob) * run_blend
 	)
 	transform = run_transform * transform
-	_models[selected_slot].transform = transform
+	var sway_transform = Transform3D.IDENTITY
+	if _controls_enabled:
+		sway_transform = _sway.step(
+			definition.sway_profile,
+			_look_delta,
+			delta,
+			aim_blend,
+			_sway_stance,
+			_sway_moving,
+			_sway_focused and wants_aim
+		)
+	_models[selected_slot].transform = (
+		_recoil.step(current_mode(), delta) * sway_transform * transform
+	)
+	_look_delta = Vector2.ZERO
 	_flashes[selected_slot].follow_bone()
 	_update_ammo_label()
 
@@ -276,9 +381,14 @@ func _update_ammo_label() -> void:
 		)
 	)
 	_ammo_label.text = (
-		"%s\n%d / %d%s"
+		"%s · %s\n%d / %d%s"
 		% [
 			WeaponCatalog.DEFINITIONS[selected_slot].display_name,
+			(
+				["ОДИН", "ОЧЕРЕДЬ", "АВТО"][selected_fire_mode()]
+				if selected_fire_mode() >= 0
+				else "ВЫКЛ"
+			),
 			ammunition.magazines[selected_slot],
 			ammunition.reserves[selected_slot],
 			status

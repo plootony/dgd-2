@@ -20,7 +20,8 @@ func run():
 	change_scene_to_file("res://game/main.tscn")
 	await scene_changed
 	var scene = current_scene
-	scene.get_node("Tony").set_physics_process(false)
+	for zombie in get_nodes_in_group("NPCs"):
+		zombie.set_physics_process(false)
 	var deadline = Time.get_ticks_msec() + 45000
 	while (
 		not is_instance_valid(scene.local_player) or scene.get_node("Players").get_child_count() < 2
@@ -52,22 +53,23 @@ func run():
 		await process_frame
 	await create_timer(0.5).timeout
 	if role == "client":
+		p.net_grounded = true
 		p.rig.global_position = p.global_position + Vector3.UP * 1.62
 		p.camera.position = Vector3.ZERO
 		p.camera.look_at(other.global_position + Vector3.UP * 1.0)
 		p.first_person_weapons.select_slot(1)
 		p.first_person_weapons.update_controls(true, false, false, false)
+		p.first_person_weapons.aim_blend = 1.0
 		for i in 3:
 			p.first_person_weapons.request_fire()
-			p.first_person_weapons._process(0.35)
-			await create_timer(0.35).timeout
 		await create_timer(0.6).timeout
-		check(other.combat.health == 0, "client raycasts kill remote player")
+		check(other.combat.health == 0, "three same-frame pistol clicks kill remote player")
 		check(p.combat.health == 100, "shooter unharmed")
 		check(get_nodes_in_group("Ragdolls").size() == 1, "remote corpse visible")
 		p.camera.look_at(tony.global_position + Vector3.UP * 1.0)
 		p.first_person_weapons.select_slot(0)
 		p.first_person_weapons.update_controls(true, false, false, false)
+		p.first_person_weapons.aim_blend = 1.0
 		for i in 4:
 			p.first_person_weapons.request_fire()
 			p.first_person_weapons._process(0.2)

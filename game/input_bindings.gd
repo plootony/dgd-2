@@ -9,12 +9,14 @@ static func ensure_defaults() -> void:
 		"move_left": KEY_A,
 		"move_right": KEY_D,
 		"run": KEY_SHIFT,
+		"weapon_focus": KEY_SHIFT,
 		"crouch": KEY_CTRL,
 		"jump": KEY_SPACE,
 		"view_toggle": KEY_V,
 		"weapon_1": KEY_1,
 		"weapon_2": KEY_2,
-		"reload": KEY_R
+		"reload": KEY_R,
+		"fire_mode": KEY_B
 	}
 	for action in keys:
 		if not InputMap.has_action(action):

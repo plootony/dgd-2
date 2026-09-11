@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="WeaponControlProfile" format=3 uid="uid://bsgfts7nek2xi"]
+
+[ext_resource type="Script" uid="uid://cq2nkuvhdna8q" path="res://addons/weapon_control/fire_mode.gd" id="mode"]
+[ext_resource type="Script" uid="uid://dmawkcqhtsvir" path="res://addons/weapon_control/weapon_profile.gd" id="profile"]
+
+[sub_resource type="Resource" id="auto"]
+script = ExtResource("mode")
+yaw_pattern = PackedFloat32Array(-0.1, 0.1, 0.15, -0.05)
+
+[sub_resource type="Resource" id="burst"]
+script = ExtResource("mode")
+interval = 0.1
+ads_spread = 0.12
+spread_per_shot = 0.1
+pitch_kick = 0.7
+yaw_pattern = PackedFloat32Array(-0.1, 0.1, 0.15, -0.05)
+
+[sub_resource type="Resource" id="single"]
+script = ExtResource("mode")
+hip_spread = 1.3
+ads_spread = 0.1
+spread_per_shot = 0.06
+pitch_kick = 0.65
+yaw_pattern = PackedFloat32Array(-0.1, 0.1, 0.15, -0.05)
+
+[resource]
+script = ExtResource("profile")
+display_name = "AK74U"
+default_mode = 2
+single = SubResource("single")
+burst = SubResource("burst")
+automatic = SubResource("auto")

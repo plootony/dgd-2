@@ -18,6 +18,7 @@ func run():
 	weapons.set_process(false)
 	for slot in 2:
 		weapons.select_slot(slot)
+		weapons.WeaponCatalog.DEFINITIONS[slot].sway_profile.pattern_enabled = false
 		var player = weapons._players[slot]
 		for clip in ["idle", "aim", "shoot", "reload"]:
 			assert(player.has_animation("viewmodel/" + clip))

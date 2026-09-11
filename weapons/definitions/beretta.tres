@@ -1,12 +1,17 @@
-[gd_resource type="Resource" load_steps=2 format=3]
+[gd_resource type="Resource" load_steps=4 format=3]
+[ext_resource type="Resource" path="res://weapon_control_profiles/beretta.tres" id="control"]
+[ext_resource type="Resource" path="res://weapon_sway_profiles/beretta.tres" id="sway"]
 [ext_resource type="Script" path="res://weapons/weapon_definition.gd" id="1"]
 [resource]
 script = ExtResource("1")
 display_name = "Beretta"
+control_profile = ExtResource("control")
+sway_profile = ExtResource("sway")
 model_path = "res://weapon/shared-hands/Beretta_bare_arms.glb"
 damage = 40
 shot_seconds = 0.24
 automatic = false
+unlimited_click_fire = true
 hip_position = Vector3(0.08, -0.12, -0.10)
 rear_sight = Vector3(-0.039482, 0.05381, 0.24945)
 front_sight = Vector3(-0.039274, 0.05295, 0.39029)

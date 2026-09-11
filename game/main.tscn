@@ -3,12 +3,12 @@
 [ext_resource type="Script" uid="uid://c7kk4nxlwlmu1" path="res://game/main.gd" id="1"]
 [ext_resource type="PackedScene" path="res://characters/player/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://characters/tony/tony.tscn" id="3"]
-[ext_resource type="Shader" path="res://environments/drifting_fog.gdshader" id="4"]
+[ext_resource type="Shader" uid="uid://bocg5f60w0uv8" path="res://environments/drifting_fog.gdshader" id="4"]
 [ext_resource type="PackedScene" path="res://characters/bogdan/bogdan.tscn" id="bogdan"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fog"]
 shader = ExtResource("4")
-shader_parameter/density = 0.20
+shader_parameter/density = 0.2
 shader_parameter/tint = Color(0.72, 0.8, 0.86, 1)
 shader_parameter/wind = Vector2(0.22, 0.1)
 
@@ -25,35 +25,35 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.2, 7)
 
 [node name="Players" type="Node3D" parent="." unique_id=1381656623]
 
-[node name="Bogdan" parent="." instance=ExtResource("bogdan")]
-position = Vector3(-4, 0.2, 7)
+[node name="Bogdan" parent="." unique_id=1505283350 instance=ExtResource("bogdan")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.2, 7)
 
-[node name="Tony_2" parent="." instance=ExtResource("3")]
-position = Vector3(6, 0.2, 12)
+[node name="Tony_2" parent="." unique_id=1417356701 instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.2, 12)
 
-[node name="Bogdan_2" parent="." instance=ExtResource("bogdan")]
-position = Vector3(-6, 0.2, 12)
+[node name="Bogdan_2" parent="." unique_id=642224144 instance=ExtResource("bogdan")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.2, 12)
 
-[node name="Tony_3" parent="." instance=ExtResource("3")]
-position = Vector3(12, 0.2, 10)
+[node name="Tony_3" parent="." unique_id=1072193808 instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.2, 10)
 
-[node name="Bogdan_3" parent="." instance=ExtResource("bogdan")]
-position = Vector3(-12, 0.2, 10)
+[node name="Bogdan_3" parent="." unique_id=513417068 instance=ExtResource("bogdan")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.2, 10)
 
-[node name="Tony_4" parent="." instance=ExtResource("3")]
-position = Vector3(16, 0.2, 2)
+[node name="Tony_4" parent="." unique_id=1813725270 instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.2, 2)
 
-[node name="Bogdan_4" parent="." instance=ExtResource("bogdan")]
-position = Vector3(-16, 0.2, 2)
+[node name="Bogdan_4" parent="." unique_id=744226022 instance=ExtResource("bogdan")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0.2, 2)
 
-[node name="Tony_5" parent="." instance=ExtResource("3")]
-position = Vector3(4, 0.2, -12)
+[node name="Tony_5" parent="." unique_id=1429048641 instance=ExtResource("3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.2, -12)
 
-[node name="Bogdan_5" parent="." instance=ExtResource("bogdan")]
-position = Vector3(-4, 0.2, -12)
+[node name="Bogdan_5" parent="." unique_id=1260347996 instance=ExtResource("bogdan")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.2, -12)
 
 [node name="PlayerSpawner" type="FusionSpawner" parent="." unique_id=1877813717]
 spawn_path = NodePath("../Players")
 spawnable_scenes = Array[PackedScene]([ExtResource("2")])
 
-[node name="Corpses" type="Node3D" parent="."]
+[node name="Corpses" type="Node3D" parent="." unique_id=1961465729]

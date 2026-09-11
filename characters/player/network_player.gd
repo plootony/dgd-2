@@ -55,6 +55,7 @@ func _ready() -> void:
 		first_person_weapons.name = "FirstPersonWeapons"
 		add_child(first_person_weapons)
 		first_person_weapons.shot_fired.connect(fire_weapon)
+		first_person_weapons.recoil_kicked.connect(_apply_recoil)
 	else:
 		physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 		camera.current = false
@@ -75,6 +76,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_2"):
 		first_person_weapons.select_slot(1)
 	if not third_person:
+		if event.is_action_pressed("fire_mode"):
+			first_person_weapons.cycle_fire_mode()
 		if event.is_action_pressed("fire"):
 			first_person_weapons.request_fire()
 		if event.is_action_pressed("reload"):
@@ -84,9 +87,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		if OS.has_feature("web") and (absf(mouse.x) > 300 or absf(mouse.y) > 300):
 			return
 		var aim_sensitivity = lerpf(1.0, 0.55, first_person_weapons.aim_blend)
+		var previous_pitch = net_pitch
+		var previous_yaw = _yaw
 		_yaw -= mouse.x * sensitivity * aim_sensitivity
 		net_pitch = clampf(
 			net_pitch - mouse.y * sensitivity * aim_sensitivity, deg_to_rad(-89), deg_to_rad(89)
+		)
+		first_person_weapons.add_look_delta(
+			Vector2(net_pitch - previous_pitch, _yaw - previous_yaw)
 		)
 	if event.is_action_pressed("jump"):
 		_jump_requested = true
@@ -173,6 +181,11 @@ func _process(delta: float) -> void:
 	)
 	first_person_weapons.update_controls(
 		controls, Input.is_action_pressed("fire"), Input.is_action_pressed("aim"), running
+	)
+	first_person_weapons.update_sway_context(
+		net_crouched,
+		Vector2(velocity.x, velocity.z).length() > 0.15,
+		Input.is_action_pressed("aim") and Input.is_action_pressed("weapon_focus")
 	)
 	var target_height = 0.95 if net_crouched else 1.62
 	var target = get_global_transform_interpolated().origin + Vector3(0, target_height, 0)
@@ -277,9 +290,16 @@ func combat_respawn(pos: Vector3) -> void:
 
 @rpc("any_peer", "reliable")
 func rpc_request_shot(
-	sequence: int, shot_life: int, slot: int, origin: Vector3, direction: Vector3
+	sequence: int,
+	shot_life: int,
+	slot: int,
+	origin: Vector3,
+	direction: Vector3,
+	mode: int = -1,
+	aim: float = 0.0,
+	focused: bool = false
 ) -> void:
-	combat.rpc_request_shot(sequence, shot_life, slot, origin, direction)
+	combat.rpc_request_shot(sequence, shot_life, slot, origin, direction, mode, aim, focused)
 
 
 func get_eye_position() -> Vector3:
@@ -293,7 +313,22 @@ func get_respawn_position() -> Vector3:
 func fire_weapon(slot: int) -> void:
 	if not is_local() or combat.is_dead() or third_person or not input_enabled:
 		return
-	combat.request_shot(slot, camera.global_position, -camera.global_basis.z)
+	combat.request_shot(
+		slot,
+		camera.global_position,
+		-camera.global_basis.z,
+		first_person_weapons.selected_fire_mode(),
+		first_person_weapons.aim_blend,
+		first_person_weapons._sway_focused and first_person_weapons._aim_held
+	)
+
+
+func _apply_recoil(pitch_yaw: Vector2) -> void:
+	if not is_local() or combat.is_dead() or third_person:
+		return
+	net_pitch = clampf(net_pitch + pitch_yaw.x, deg_to_rad(-89), deg_to_rad(89))
+	_yaw += pitch_yaw.y
+	rig.global_rotation = Vector3(net_pitch, _yaw, 0)
 
 
 func _create_corpse(initial_velocity: Vector3, container: Node) -> Node3D:

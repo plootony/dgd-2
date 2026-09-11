@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WeaponSwayProfile" format=3 uid="uid://docopj87uq0j4"]
+
+[ext_resource type="Script" uid="uid://cgvab0b7wnkek" path="res://addons/weapon_sway/sway_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+spring_enabled = true
+spring_mass = 3.0
+spring_stiffness = 150.0
+spring_damping = 32.0
+lag_seconds = 0.1
+max_angle_degrees = 4.5
+position_gain = 0.31
+max_offset = 0.035
+roll_ratio = 0.42
+aim_multiplier = 0.1

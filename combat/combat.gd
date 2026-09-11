@@ -33,6 +33,7 @@ var _next_fire = 0.0
 var _sequence = 0
 var _last_sequence = -1
 var _shots: Array[Dictionary] = []
+var _ballistics = preload("res://addons/weapon_control/ballistics.gd").new()
 var confirmed_hits = 0
 var _shown_impact: int = 0
 var _shown_surface: int = 0
@@ -61,30 +62,60 @@ func is_dead() -> bool:
 	return health <= 0
 
 
-func request_shot(slot: int, origin: Vector3, direction: Vector3) -> void:
+func request_shot(
+	slot: int,
+	origin: Vector3,
+	direction: Vector3,
+	mode: int = -1,
+	aim: float = 0.0,
+	focused: bool = false
+) -> void:
 	if is_dead():
 		return
 	_sequence += 1
 	if is_authority():
-		_queue_shot(_sequence, life, slot, origin, direction)
+		_queue_shot(_sequence, life, slot, origin, direction, mode, aim, focused)
 	else:
 		Fusion.rpc_to(
-			-1, Callable(actor, "rpc_request_shot"), _sequence, life, slot, origin, direction
+			-1,
+			Callable(actor, "rpc_request_shot"),
+			_sequence,
+			life,
+			slot,
+			origin,
+			direction,
+			mode,
+			aim,
+			focused
 		)
 
 
 func rpc_request_shot(
-	sequence: int, shot_life: int, slot: int, origin: Vector3, direction: Vector3
+	sequence: int,
+	shot_life: int,
+	slot: int,
+	origin: Vector3,
+	direction: Vector3,
+	mode: int = -1,
+	aim: float = 0.0,
+	focused: bool = false
 ) -> void:
 	if not Fusion.is_master_client():
 		return
 	if Fusion.get_rpc_sender() != _replicator.get_owner_id():
 		return
-	_queue_shot(sequence, shot_life, slot, origin, direction)
+	_queue_shot(sequence, shot_life, slot, origin, direction, mode, aim, focused)
 
 
 func _queue_shot(
-	sequence: int, shot_life: int, slot: int, origin: Vector3, direction: Vector3
+	sequence: int,
+	shot_life: int,
+	slot: int,
+	origin: Vector3,
+	direction: Vector3,
+	mode_id: int = -1,
+	aim: float = 0.0,
+	focused: bool = false
 ) -> void:
 	if not is_authority() or is_dead() or shot_life != life:
 		return
@@ -99,10 +130,31 @@ func _queue_shot(
 	if origin.distance_to(eye) > 2.0:
 		return
 	var now = Time.get_ticks_msec() / 1000.0
-	if now + 0.025 < _next_fire:
+	var definition = WeaponCatalog.DEFINITIONS[slot]
+	var profile = definition.control_profile
+	if mode_id == -1:
+		mode_id = profile.initial_mode()
+	var mode = profile.mode(mode_id)
+	if mode == null or not mode.enabled or not is_finite(aim) or aim < 0.0 or aim > 1.0:
+		return
+	var unlimited = mode_id == 0 and mode.unlimited_single_clicks
+	if not unlimited and now + 0.025 < _next_fire:
 		return
 	_last_sequence = sequence
-	_next_fire = maxf(now, _next_fire) + WeaponCatalog.DEFINITIONS[slot].shot_seconds
+	if not unlimited:
+		_next_fire = maxf(now, _next_fire) + mode.interval
+	direction = _ballistics.apply(
+		slot,
+		profile,
+		mode,
+		direction.normalized(),
+		aim,
+		actor.get("net_crouched") == true,
+		Vector2(actor.velocity.x, actor.velocity.z).length() > 0.15,
+		actor.get("net_grounded") == true,
+		focused and aim > 0.5,
+		now
+	)
 	_shots.append(
 		{"origin": origin, "direction": direction.normalized(), "life": life, "slot": slot}
 	)
@@ -185,6 +237,7 @@ func apply_damage(
 
 func _sync_presentation() -> void:
 	if life != _shown_life:
+		_ballistics.reset()
 		_shown_life = life
 		_shown_dead = false
 		_shots.clear()

@@ -1,8 +1,12 @@
-[gd_resource type="Resource" load_steps=2 format=3]
+[gd_resource type="Resource" load_steps=4 format=3]
+[ext_resource type="Resource" path="res://weapon_control_profiles/ak74u.tres" id="control"]
+[ext_resource type="Resource" path="res://weapon_sway_profiles/ak74u.tres" id="sway"]
 [ext_resource type="Script" path="res://weapons/weapon_definition.gd" id="1"]
 [resource]
 script = ExtResource("1")
 display_name = "AK74U"
+control_profile = ExtResource("control")
+sway_profile = ExtResource("sway")
 model_path = "res://weapon/shared-hands/AK74U_bare_arms.glb"
 damage = 34
 shot_seconds = 0.12
